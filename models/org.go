@@ -94,6 +94,10 @@ func (org *User) RemoveOrgRepo(repoID int64) error {
 
 // CreateOrganization creates record of a new organization.
 func CreateOrganization(org, owner *User) (err error) {
+	if !owner.IsAdmin {
+		return fmt.Errorf("User is not Admin")
+	}
+
 	if err = IsUsableName(org.Name); err != nil {
 		return err
 	}
@@ -1055,7 +1059,7 @@ func RemoveOrgRepo(orgID, repoID int64) error {
 // that the user with the given userID has access to.
 func (org *User) GetUserRepositories(userID int64) (err error) {
 	teams := make([]*Team, 0, org.NumTeams)
-	if err = x.Sql(`SELECT team.id FROM team 
+	if err = x.Sql(`SELECT team.id FROM team
 INNER JOIN team_user ON team_user.team_id = team.id
 WHERE team_user.org_id = ? AND team_user.uid = ?`, org.Id, userID).Find(&teams); err != nil {
 		return fmt.Errorf("get teams: %v", err)
